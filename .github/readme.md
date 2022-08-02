@@ -1,5 +1,5 @@
-<h3 align="center">Rose Browser</h1>
-<h4 align="center">Simple browser based on webkit2gtk-5.0</h4>
+<h3 align=center> Rose Browser</h1>
+<h4 align=center>Simple browser based on webkit2gtk-5.0</h4>
 &nbsp;
 <img src="https://github.com/mini-rose/rose/blob/master/.github/screenshots/homepage.png?raw=true">
 
