@@ -64,12 +64,13 @@ static bool has_prefix(const char *uri)
 
 static void load_uri(RoseWebview *view, const char *uri)
 {
+	char tmp[254];
+
 	if (has_prefix(uri)) {
 		webkit_web_view_load_uri(view->webview, uri);
 		return;
 	}
 
-	char tmp[254];
 	snprintf(tmp, sizeof(tmp) - 1, "https://duckduckgo.com/?q=%s", uri);
 	webkit_web_view_load_uri(view->webview, tmp);
 }
@@ -79,7 +80,7 @@ static gboolean key_press(RoseWindow *window, int key,
 {
 	(void) keycode;
 
-	for (int i = 0; i < sizeof(keys) / sizeof(keys[0]); i++)
+	for (int i = 0; i < (int)(sizeof(keys) / sizeof(keys[0])); i++)
 		if (keys[i].mod == mod && keys[i].key == key)
 			return handle_key(window, keys[i].func, key);
 
@@ -108,7 +109,7 @@ static void response_reciver(WebKitDownload *d)
 static void download(WebKitDownload *d)
 {
 	g_signal_connect(d, "notify::response",
-		(void*) response_reciver, NULL);
+		G_CALLBACK(response_reciver), NULL);
 }
 
 static RoseWebview *rose_webview_new(void)
@@ -162,6 +163,8 @@ static RoseWebview *rose_webview_new(void)
 		"javascript-can-access-clipboard", 1,
 		"enable-smooth-scrolling", 1, NULL);
 
+	webkit_settings_set_sans_serif_font_family(settings, "JetBrainsMono Nerd Font Mono");
+
 	contentmanager = webkit_user_content_manager_new();
 
 	webkit_web_context_set_process_model(context, 1);
@@ -172,7 +175,7 @@ static RoseWebview *rose_webview_new(void)
 		"web-context", context, NULL);
 
 	self->inspector = webkit_web_view_get_inspector(self->webview);
-	g_signal_connect(context, "download-started", (void*) download, NULL);
+	g_signal_connect(context, "download-started", G_CALLBACK(download), NULL);
 
 	return self;
 }
@@ -188,7 +191,7 @@ static void toggle_titlebar(RoseWindow *w)
 		return;
 	}
 
-	if (w->tabs[w->tab]->find_mode) {
+	if (!w->tabs[w->tab]->find_mode) {
 		gtk_entry_set_placeholder_text(w->searchbar, "Find");
 		gtk_widget_show(titlebar);
 		gtk_window_set_focus(GTK_WINDOW(w->window),
@@ -245,10 +248,10 @@ static void load_tab(RoseWindow *w, int n)
 	tab->controller = gtk_event_controller_key_new();
 
 	g_signal_connect_swapped(tab->controller, "key-pressed",
-	                         (void*) key_press, w);
+	                         G_CALLBACK(key_press), w);
 
 	g_signal_connect(tab->webview, "load-changed",
-	                 (void*) load_changed, w);
+	                 G_CALLBACK(load_changed), w);
 
 	gtk_widget_add_controller(GTK_WIDGET(tab->webview), tab->controller);
 
@@ -330,7 +333,6 @@ bool handle_key(RoseWindow *w, int func, int key)
 			break;
 
 		case hidebar:
-			tab->find_mode = 0;
 			toggle_titlebar(w);
 			break;
 
@@ -425,8 +427,10 @@ bool handle_key(RoseWindow *w, int func, int key)
 
 static void rose_window_show(RoseWindow *w)
 {
-	if (!(appearance[WIDTH] && appearance[HEIGHT]))
-		appearance[WIDTH] = 1280, appearance[HEIGHT] = 720;
+	if (!(appearance[WIDTH] && appearance[HEIGHT])) {
+		appearance[WIDTH] = 1280;
+		appearance[HEIGHT] = 720;
+	}
 
 	gtk_window_set_default_size(GTK_WINDOW(w->window), appearance[WIDTH],
 	                            appearance[HEIGHT]);
@@ -442,7 +446,7 @@ static void searchbar_activate(GtkEntry *self, RoseWindow *w)
 {
 	(void) self;
 
-	if (w->tabs[w->tab]->find_mode) {
+	if (!w->tabs[w->tab]->find_mode) {
 		load_uri(w->tabs[w->tab], gtk_entry_buffer_get_text(w->searchbuf));
 		return;
 	}
@@ -481,10 +485,10 @@ static RoseWindow* rose_window_init(void)
 	gtk_widget_set_focus_child(w->window, w->tabview);
 
 	g_signal_connect(w->searchbar, "activate",
-		(void*) searchbar_activate, w);
+		G_CALLBACK(searchbar_activate), w);
 
 	g_signal_connect(w->window, "destroy",
-		(void*) destroy, w);
+		G_CALLBACK(destroy), w);
 
 	return w;
 }
