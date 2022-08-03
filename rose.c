@@ -1,6 +1,7 @@
 #define _XOPEN_SOURCE 500
 #define _POSIX_C_SOURCE 200112
 
+#include <curl/curl.h>
 #include <webkit2/webkit2.h>
 
 #define ALTKEY 1 << 3
@@ -20,7 +21,7 @@ enum functions {
 
 enum appearance { HEIGHT, WIDTH, DARKMODE, SMOOTHSCROLL, ANIMATIONS };
 enum privacy { CACHING, COOKIES, HISTORY };
-enum options { DEFAULT, CACHE, HOMEPAGE };
+enum options { DEFAULT, CACHE, HOMEPAGE, DOWNLOAD };
 
 #include "config.h"
 
@@ -97,14 +98,36 @@ static gboolean key_press(RoseWindow *window, int key,
 	return 0;
 }
 
+static char *untilde_path(char *path)
+{
+   char *buf;
+
+	if (path[0] != '~')
+		return path;
+
+   path++;
+   buf = getenv("HOME");
+   strcat(buf, path);
+   return buf;
+}
+
+static size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream) {
+    size_t written = fwrite(ptr, size, nmemb, stream);
+    return written;
+}
+
 static void rose_download(const char *uri)
 {
 	// TODO: implement download with libcurl
+	CURL *curl;
 
 	if (!fork()) {
 		setsid();
-		execlp("aria2c", "aria2c", uri, (char *)NULL);
-		perror(" failed");
+		curl = curl_easy_init();
+		curl_easy_setopt(curl, CURLOPT_URL, uri);
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
+		curl_easy_perform(curl);
+		curl_easy_cleanup(curl);
 		exit(1);
 	}
 }
@@ -255,7 +278,7 @@ static void load_changed(WebKitWebView *v, WebKitLoadEvent e,
 static void load_tab(RoseWindow *w, int n)
 {
 	RoseWebview *tab;
-	GtkWidget *parent;
+
 	if (w->tabs[n]) return;
 
 	w->tabs[n] = rose_webview_new();
