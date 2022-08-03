@@ -98,37 +98,17 @@ static gboolean key_press(RoseWindow *window, int key,
 	return 0;
 }
 
-static char *untilde_path(char *path)
-{
-   char *buf;
-
-	if (path[0] != '~')
-		return path;
-
-   path++;
-   buf = getenv("HOME");
-   strcat(buf, path);
-   return buf;
-}
-
-static size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream) {
-    size_t written = fwrite(ptr, size, nmemb, stream);
-    return written;
-}
-
 static void rose_download(const char *uri)
 {
-	// TODO: implement download with libcurl
 	CURL *curl;
 
 	if (!fork()) {
 		setsid();
 		curl = curl_easy_init();
 		curl_easy_setopt(curl, CURLOPT_URL, uri);
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
 		curl_easy_perform(curl);
 		curl_easy_cleanup(curl);
-		exit(1);
+		exit(0);
 	}
 }
 
