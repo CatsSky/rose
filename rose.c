@@ -535,7 +535,7 @@ static void run(char *url)
 
 	s = g_settings_new_with_path("org.gtk.gtk4.Settings.Debug",
 	                             "/org/gtk/gtk4/settings/debug/");
-	g_settings_set_boolean(s, "enable-inspector-keybinding", true);
+	g_settings_set_boolean(s, "enable-inspector-keybinding", false);
 
 	if (appearance[DARKMODE])
 		g_object_set(gtk_settings_get_default(),
