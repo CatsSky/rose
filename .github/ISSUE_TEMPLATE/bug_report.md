@@ -1,25 +1,19 @@
----
-name: Bug report
-about: Create a report to help us improve
-title: ''
-labels: bug
-assignees: ''
+**_NOTE:_** Many of crashes/freezes is typically from webkit.
+Please report only core bugs.<br>
+&emsp;&emsp;&emsp;&ensp;[ keybinds functions, ui bugs, or everything else ]. Webkit bug road [here](https://webkit.org/reporting-bugs/). <br>
 
----
+#
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+**Describe the bug**<br>
+&emsp;A clear and concise description of what the bug is.<br>
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
-
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+**Screenshots**<br>
+&emsp;If applicable, add screenshots to help explain your problem.<br>
 
 **Desktop (please complete the following information):**
  - OS: [e.g. iOS]
  - WebKit [version]
  - Gtk [version]
 
-**Additional context**
-Add any other context about the problem here.
+**Additional context**<br>
+&emsp;Add any other context about the problem here.
