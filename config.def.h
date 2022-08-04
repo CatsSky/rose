@@ -1,5 +1,5 @@
 static char *options[] = {
-	[CACHE]    = NULL,
+	[CACHE]    = NULL,  // dir path
 	[HOMEPAGE] = "https://duckduckgo.com",
 };
 
@@ -8,7 +8,8 @@ static int appearance[] = {
 	[WIDTH]        = DEFAULT,
 	[DARKMODE]     = 1,
 	[SMOOTHSCROLL] = 0,
-	[ANIMATIONS]   = 1
+	[ANIMATIONS]   = 1,
+	[TABBAR]       = 0    // width
 };
 
 static int privacy[] = {

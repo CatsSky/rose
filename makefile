@@ -3,14 +3,14 @@ PREFIX := /usr/local
 
 all: config.h rose
 
+config.h:
+	cp config.def.h $@
+
 rose: rose.o
 	$(CC) `pkgconf --libs webkit2gtk-5.0 libcurl` -o $@ $?
 
 rose.o: rose.c
 	$(CC) `pkgconf --cflags webkit2gtk-5.0 libcurl` -c $<
-
-config.h:
-	cp config.def.h $@
 
 install: rose
 	cp -f ./rose $(PREFIX)/bin/rose

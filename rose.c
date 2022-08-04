@@ -19,7 +19,8 @@ enum functions {
 	reloadforce, history, gotop, gobottom, tabshow, tabnext, tabprev,
 	tabsel, tabclose, hidebar };
 
-enum appearance { HEIGHT, WIDTH, DARKMODE, SMOOTHSCROLL, ANIMATIONS };
+enum appearance { HEIGHT, WIDTH, DARKMODE, SMOOTHSCROLL, ANIMATIONS,
+                  TABBAR };
 enum privacy { CACHING, COOKIES, HISTORY };
 enum options { DEFAULT, CACHE, HOMEPAGE, DOWNLOAD };
 
@@ -174,9 +175,8 @@ static RoseWebview *rose_webview_new(void)
 		"enable-developer-extras", 1,
 		"enable-media-stream", 1,
 		"javascript-can-access-clipboard", 1,
+		"enable-webgl", 1,
 		"enable-smooth-scrolling", 1, NULL);
-
-	webkit_settings_set_sans_serif_font_family(settings, "JetBrainsMono Nerd Font Mono");
 
 	contentmanager = webkit_user_content_manager_new();
 
@@ -204,7 +204,7 @@ static void toggle_titlebar(RoseWindow *w)
 		return;
 	}
 
-	if (!w->tabs[w->tab]->find_mode) {
+	if (w->tabs[w->tab]->find_mode) {
 		gtk_entry_set_placeholder_text(w->searchbar, "Find");
 		gtk_widget_show(titlebar);
 		gtk_window_set_focus(GTK_WINDOW(w->window),
@@ -267,13 +267,9 @@ static void load_tab(RoseWindow *w, int n)
 
 	g_signal_connect_swapped(tab->controller, "key-pressed",
 	                         G_CALLBACK(key_press), w);
-
 	g_signal_connect(tab->webview, "load-changed",
 	                 G_CALLBACK(load_changed), w);
-
 	gtk_widget_add_controller(GTK_WIDGET(tab->webview), tab->controller);
-
-
 	gtk_stack_add_titled(GTK_STACK(w->tabview), GTK_WIDGET(tab->webview),
 	                     get_stack_page_name(n), "");
 
@@ -472,7 +468,7 @@ static void searchbar_activate(GtkEntry *self, RoseWindow *w)
 {
 	(void) self;
 
-	if (!w->tabs[w->tab]->find_mode) {
+	if (w->tabs[w->tab]->find_mode) {
 		load_uri(w->tabs[w->tab], gtk_entry_buffer_get_text(w->searchbuf));
 		return;
 	}
@@ -507,9 +503,7 @@ static RoseWindow* rose_window_init(void)
 	gtk_entry_set_placeholder_text(w->searchbar, "Search");
 	gtk_entry_set_icon_from_icon_name(w->searchbar, GTK_ENTRY_ICON_PRIMARY,
 	                                  "edit-find-symbolic");
-
-	gtk_widget_set_size_request(GTK_WIDGET(w->sidebar), -1, -1);
-	gtk_widget_set_size_request(GTK_WIDGET(w->tabview), 300, -1);
+	gtk_paned_set_position(w->layout, appearance[TABBAR]);
 	gtk_widget_set_size_request(GTK_WIDGET(w->searchbar), 300, -1);
 	gtk_header_bar_set_title_widget(w->bar, GTK_WIDGET(w->searchbar));
 	gtk_header_bar_set_show_title_buttons(w->bar, 0);
