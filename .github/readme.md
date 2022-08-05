@@ -12,6 +12,7 @@ For more features see [this](https://github.com/mini-rose/rose/wiki#additional-f
   - Privacy options
   - cli support
   - easy to extend
+  - custom themes and css
 
 #### Installation
 See wiki page to see how to [build and use](https://github.com/mini-rose/rose/wiki#build--use).
