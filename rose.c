@@ -134,6 +134,7 @@ static RoseWebview *rose_webview_new(void)
 	WebKitSettings *settings;
 	RoseWebview *self;
 	char cookiefile[128];
+	char *style;
 
 	self = malloc(sizeof(RoseWebview));
 	self->zoom = 1;
@@ -181,6 +182,12 @@ static RoseWebview *rose_webview_new(void)
 	contentmanager = webkit_user_content_manager_new();
 
 	webkit_web_context_set_process_model(context, 1);
+
+	if (g_file_get_contents("~/.config/rose/style.css", &style, NULL, NULL))
+		webkit_user_content_manager_add_style_sheet(contentmanager,
+		   webkit_user_style_sheet_new(
+				style, WEBKIT_USER_CONTENT_INJECT_ALL_FRAMES,
+				WEBKIT_USER_STYLE_LEVEL_USER, NULL, NULL));
 
 	self->webview = g_object_new(WEBKIT_TYPE_WEB_VIEW,
 		"settings", settings,
@@ -474,7 +481,7 @@ static void searchbar_activate(GtkEntry *self, RoseWindow *w)
 {
 	(void) self;
 
-	if (w->tabs[w->tab]->find_mode) {
+	if (!w->tabs[w->tab]->find_mode) {
 		load_uri(w->tabs[w->tab], gtk_entry_buffer_get_text(w->searchbuf));
 		return;
 	}
@@ -512,7 +519,7 @@ static RoseWindow* rose_window_init(void)
 	gtk_paned_set_position(w->layout, appearance[TABBAR]);
 	gtk_widget_set_size_request(GTK_WIDGET(w->searchbar), 300, -1);
 	gtk_header_bar_set_title_widget(w->bar, GTK_WIDGET(w->searchbar));
-	// gtk_header_bar_set_show_title_buttons(w->bar, 0);
+	gtk_header_bar_set_show_title_buttons(w->bar, 0);
 	gtk_window_set_titlebar(GTK_WINDOW(w->window), GTK_WIDGET(w->bar));
 	gtk_window_set_destroy_with_parent(GTK_WINDOW(w->window), 1);
 	gtk_window_set_child(GTK_WINDOW(w->window), GTK_WIDGET(w->layout));
