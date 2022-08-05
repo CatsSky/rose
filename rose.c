@@ -22,7 +22,7 @@ enum functions {
 enum appearance { HEIGHT, WIDTH, DARKMODE, SMOOTHSCROLL, ANIMATIONS,
                   TABBAR };
 enum privacy { CACHING, COOKIES, HISTORY };
-enum options { DEFAULT, CACHE, HOMEPAGE, DOWNLOAD };
+enum options { DEFAULT, CACHE, HOMEPAGE, DOWNLOAD, THEME };
 
 #include "config.h"
 
@@ -289,6 +289,9 @@ static void move_tab(RoseWindow *w, int move)
 	gtk_stack_set_visible_child(GTK_STACK(w->tabview),
 		gtk_stack_get_child_by_name(GTK_STACK(w->tabview),
 			get_stack_page_name(w->tab)));
+
+	gtk_window_set_focus(GTK_WINDOW(w->window),
+		GTK_WIDGET(w->tabs[w->tab]->webview));
 }
 
 bool handle_key(RoseWindow *w, int func, int key)
@@ -411,6 +414,9 @@ bool handle_key(RoseWindow *w, int func, int key)
 				)
 			);
 
+			gtk_window_set_focus(GTK_WINDOW(w->window),
+			                     GTK_WIDGET(w->tabs[w->tab]->webview));
+
 			break;
 
 		case tabclose: {
@@ -506,10 +512,11 @@ static RoseWindow* rose_window_init(void)
 	gtk_paned_set_position(w->layout, appearance[TABBAR]);
 	gtk_widget_set_size_request(GTK_WIDGET(w->searchbar), 300, -1);
 	gtk_header_bar_set_title_widget(w->bar, GTK_WIDGET(w->searchbar));
-	gtk_header_bar_set_show_title_buttons(w->bar, 0);
+	// gtk_header_bar_set_show_title_buttons(w->bar, 0);
 	gtk_window_set_titlebar(GTK_WINDOW(w->window), GTK_WIDGET(w->bar));
 	gtk_window_set_destroy_with_parent(GTK_WINDOW(w->window), 1);
 	gtk_window_set_child(GTK_WINDOW(w->window), GTK_WIDGET(w->layout));
+	gtk_entry_set_alignment(w->searchbar, (float)0.40);
 
 	g_signal_connect(w->searchbar, "activate",
 		G_CALLBACK(searchbar_activate), w);
@@ -531,11 +538,16 @@ static RoseWindow* rose_window_new(char *uri)
 static void run(char *url)
 {
 	GSettings *s;
+	GtkCssProvider *css = gtk_css_provider_new();
 	RoseWindow *window = rose_window_new(url);
 
 	s = g_settings_new_with_path("org.gtk.gtk4.Settings.Debug",
 	                             "/org/gtk/gtk4/settings/debug/");
 	g_settings_set_boolean(s, "enable-inspector-keybinding", false);
+
+	gtk_css_provider_load_from_path(css, strlen(options[THEME]) ? options[THEME] :
+	                                "/usr/share/themes/rose/catppuccin.css");
+	gtk_style_context_add_provider_for_display(gdk_display_get_default(), GTK_STYLE_PROVIDER(css), 800);
 
 	if (appearance[DARKMODE])
 		g_object_set(gtk_settings_get_default(),

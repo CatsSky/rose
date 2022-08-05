@@ -13,7 +13,9 @@ rose.o: rose.c
 	$(CC) `pkgconf --cflags webkit2gtk-5.0 libcurl` -c $<
 
 install: rose
-	cp -f ./rose $(PREFIX)/bin/rose
+	mkdir -p /usr/share/themes/rose
+	cp -f themes/* /usr/share/themes/rose
+	cp -f rose $(PREFIX)/bin/rose
 
 uninstall:
 	rm -f $(PREFIX)/bin/rose
