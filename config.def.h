@@ -1,6 +1,7 @@
 static char *options[] = {
 	[CACHE]    = NULL,  // dir path
 	[HOMEPAGE] = "https://duckduckgo.com",
+	[THEME]    = ""
 };
 
 static int appearance[] = {
