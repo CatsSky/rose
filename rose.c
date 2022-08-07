@@ -16,7 +16,7 @@ typedef struct {
 enum functions {
 	goback, goforward, copy_url, paste_url, fullscreen, inspector, search,
 	find, findnext, findprev, zoomin, zoomout, zoomreset, down, up, reload,
-	reloadforce, history, gotop, gobottom, tabshow, tabnext, tabprev,
+	reloadforce, gotop, gobottom, tabnext, tabprev,
 	tabsel, tabclose, hidebar };
 
 enum appearance { HEIGHT, WIDTH, DARKMODE, SMOOTHSCROLL, ANIMATIONS,
@@ -51,19 +51,10 @@ static bool handle_key(RoseWindow *w, int key, int keyval);
 
 static char* get_stack_page_name(int n)
 {
-	size_t size =  sizeof(char) + 1;
+	size_t size = sizeof(char) + 1;
 	char *num = calloc(1, size);
 	snprintf(num, size, "%i", n);
 	return num;
-}
-
-static void read_clipboard(GObject *object, GAsyncResult *res,
-                           gpointer webview)
-{
-	GdkClipboard *clipboard = GDK_CLIPBOARD(object);
-	webkit_web_view_load_uri(WEBKIT_WEB_VIEW(webview),
-	                         gdk_clipboard_read_text_finish(clipboard, res,
-	                                                        NULL));
 }
 
 static bool has_prefix(const char *uri)
@@ -242,6 +233,8 @@ static void load_changed(WebKitWebView *v, WebKitLoadEvent e,
                                   RoseWindow *w)
 {
 	GtkWidget *titlebar;
+	const char *uri = webkit_web_view_get_uri(v);
+
 	if (e != WEBKIT_LOAD_FINISHED) return;
 
 	titlebar = gtk_window_get_titlebar(GTK_WINDOW(w->window));
@@ -256,8 +249,9 @@ static void load_changed(WebKitWebView *v, WebKitLoadEvent e,
 			webkit_web_view_get_title(w->tabs[w->tab]->webview)
 	);
 
+	gtk_entry_buffer_set_text(w->searchbuf, uri, (int)strlen(uri));
+
 	if (privacy[HISTORY]) {
-		const char *uri = webkit_web_view_get_uri(v);
 		append_history(uri);
 	}
 }
@@ -265,6 +259,7 @@ static void load_changed(WebKitWebView *v, WebKitLoadEvent e,
 static void load_tab(RoseWindow *w, int n)
 {
 	RoseWebview *tab;
+	char *pagename;
 
 	if (w->tabs[n]) return;
 
@@ -277,8 +272,10 @@ static void load_tab(RoseWindow *w, int n)
 	g_signal_connect(tab->webview, "load-changed",
 	                 G_CALLBACK(load_changed), w);
 	gtk_widget_add_controller(GTK_WIDGET(tab->webview), tab->controller);
+	pagename = get_stack_page_name(n);
 	gtk_stack_add_titled(GTK_STACK(w->tabview), GTK_WIDGET(tab->webview),
-	                     get_stack_page_name(n), "");
+	                     pagename, "");
+	free(pagename);
 
 	if (appearance[ANIMATIONS]) {
 		gtk_stack_set_transition_duration(GTK_STACK(w->tabview), 150);
@@ -291,11 +288,13 @@ static void load_tab(RoseWindow *w, int n)
 
 static void move_tab(RoseWindow *w, int move)
 {
+	char *pagename;
 	if ((move == -1 && w->tab == 0) || (move == 1 && w->tab == 8)) return;
 	load_tab(w, w->tab += move);
+
+	pagename = get_stack_page_name(w->tab);
 	gtk_stack_set_visible_child(GTK_STACK(w->tabview),
-		gtk_stack_get_child_by_name(GTK_STACK(w->tabview),
-			get_stack_page_name(w->tab)));
+		gtk_stack_get_child_by_name(GTK_STACK(w->tabview), pagename));
 
 	gtk_window_set_focus(GTK_WINDOW(w->window),
 		GTK_WIDGET(w->tabs[w->tab]->webview));
@@ -314,21 +313,9 @@ bool handle_key(RoseWindow *w, int func, int key)
 			webkit_web_view_go_forward(tab->webview);
 			break;
 
-		case copy_url:
-			gdk_clipboard_set_text(gdk_display_get_clipboard(
-			                       gdk_display_get_default()),
-			                       webkit_web_view_get_uri(tab->webview));
-			break;
-
 		case search:
 			tab->find_mode = 0;
 			toggle_titlebar(w);
-			break;
-
-		case paste_url:
-			gdk_clipboard_read_text_async(gdk_display_get_clipboard(
-			                              gdk_display_get_default()), NULL,
-			                              read_clipboard, tab->webview);
 			break;
 
 		case fullscreen:
@@ -412,12 +399,12 @@ bool handle_key(RoseWindow *w, int func, int key)
 			move_tab(w, func == tabnext ? 1 : -1);
 			break;
 
-		case tabsel:
+		case tabsel: {
+			char *pagename = get_stack_page_name((w->tab = key - 0x31));
 			gtk_stack_set_visible_child(
 				GTK_STACK(w->tabview),
 				gtk_stack_get_child_by_name(
-					GTK_STACK(w->tabview),
-					get_stack_page_name((w->tab = key - 0x31))
+					GTK_STACK(w->tabview), pagename
 				)
 			);
 
@@ -425,33 +412,7 @@ bool handle_key(RoseWindow *w, int func, int key)
 			                     GTK_WIDGET(w->tabs[w->tab]->webview));
 
 			break;
-
-		case tabclose: {
-			int start;
-
-			gtk_stack_remove(GTK_STACK(w->tabview),
-				gtk_stack_get_child_by_name(
-					GTK_STACK(w->tabview),
-					get_stack_page_name(w->tab)
-			));
-
-			start = w->tab--;
-
-			gtk_stack_set_visible_child(GTK_STACK(w->tabview),
-				gtk_stack_get_child_by_name(
-					GTK_STACK(w->tabview),
-					get_stack_page_name(w->tab)
-				)
-			);
-
-			for (int i = start; i < 8; i++) {
-				if (!w->tabs[i + 1]) break;
-				w->tabs[i] = w->tabs[i + 1];
-				w->tabs[i + 1] = NULL;
-			}
-
-			break;
-		}
+		 }
 
 		default:
 			return 0;
@@ -550,7 +511,7 @@ static void run(char *url)
 
 	s = g_settings_new_with_path("org.gtk.gtk4.Settings.Debug",
 	                             "/org/gtk/gtk4/settings/debug/");
-	g_settings_set_boolean(s, "enable-inspector-keybinding", false);
+	g_settings_set_boolean(s, "enable-inspector-keybinding", true);
 
 	gtk_css_provider_load_from_path(css, strlen(options[THEME]) ? options[THEME] :
 	                                "/usr/share/themes/rose/catppuccin.css");
