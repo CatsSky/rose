@@ -18,7 +18,7 @@ enum functions {
 	goback, goforward, copy_url, paste_url, fullscreen, inspector, search,
 	find, findnext, findprev, zoomin, zoomout, zoomreset, down, up, reload,
 	reloadforce, gotop, gobottom, tabnext, tabprev,
-	tabsel, tabclose, hidebar };
+	tabsel, tabclose, hidebar, halfpageup, halfpagedown };
 
 enum appearance { HEIGHT, WIDTH, DARKMODE, SMOOTHSCROLL, ANIMATIONS,
                   TABBAR };
@@ -169,7 +169,7 @@ static RoseWebview *rose_webview_new(void)
 		"enable-media-stream", 1,
 		"javascript-can-access-clipboard", 1,
 		"enable-webgl", 1,
-		"enable-smooth-scrolling", 0, NULL);
+		"enable-smooth-scrolling", 1, NULL);
 
 	contentmanager = webkit_user_content_manager_new();
 
@@ -366,6 +366,13 @@ bool handle_key(RoseWindow *w, int func, int key)
 			else webkit_web_inspector_show(tab->inspector);
 			break;
 
+		case halfpageup:
+		case halfpagedown:
+			webkit_web_view_run_javascript(tab->webview, func == halfpagedown
+			                        ? "self.scrollBy(0, self.innerHeight / 2)"
+			                     : "self.scrollBy(0, -1 * self.innerHeight / 2)",
+			                     NULL, NULL, NULL);
+			break;
 		case up:
 		case down:
 			webkit_web_view_run_javascript(tab->webview, func == up
@@ -513,7 +520,7 @@ static void run(char *url)
 
 	s = g_settings_new_with_path("org.gtk.gtk4.Settings.Debug",
 	                             "/org/gtk/gtk4/settings/debug/");
-	g_settings_set_boolean(s, "enable-inspector-keybinding", true);
+	g_settings_set_boolean(s, "enable-inspector-keybinding", false);
 
 	gtk_css_provider_load_from_path(css, strlen(options[THEME]) ? options[THEME] :
 	                                "/usr/share/themes/rose/catppuccin.css");
