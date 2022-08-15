@@ -7,10 +7,10 @@ config.h:
 	cp config.def.h $@
 
 rose: rose.o
-	$(CC) `pkgconf --libs webkit2gtk-5.0 libcurl` -o $@ $?
+	$(CC) `pkgconf --libs webkit2gtk-5.0 gtk4-x11 libcurl` -o $@ $?
 
 rose.o: rose.c
-	$(CC) `pkgconf --cflags webkit2gtk-5.0 libcurl` -c $<
+	$(CC) `pkgconf --cflags webkit2gtk-5.0 gtk4-x11 libcurl` -c $<
 
 install: rose
 	mkdir -p /usr/share/themes/rose

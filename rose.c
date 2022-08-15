@@ -3,6 +3,7 @@
 
 #include <curl/curl.h>
 #include <webkit2/webkit2.h>
+#include <gdk/x11/gdkx.h>
 
 #define ALTKEY 1 << 3
 #define MODKEY 1 << 2
@@ -168,7 +169,7 @@ static RoseWebview *rose_webview_new(void)
 		"enable-media-stream", 1,
 		"javascript-can-access-clipboard", 1,
 		"enable-webgl", 1,
-		"enable-smooth-scrolling", 1, NULL);
+		"enable-smooth-scrolling", 0, NULL);
 
 	contentmanager = webkit_user_content_manager_new();
 
@@ -471,6 +472,7 @@ static RoseWindow* rose_window_init(void)
 	w->layout = GTK_PANED(gtk_paned_new(GTK_ORIENTATION_HORIZONTAL));
 	w->sidebar = GTK_STACK_SIDEBAR(gtk_stack_sidebar_new());
 
+	gdk_x11_display_set_program_class(gdk_display_get_default(), "rose");
 	gtk_stack_sidebar_set_stack(w->sidebar, GTK_STACK(w->tabview));
 	gtk_paned_set_start_child(w->layout, GTK_WIDGET(w->sidebar));
 	gtk_paned_set_end_child(w->layout, GTK_WIDGET(w->tabview));
